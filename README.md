@@ -156,6 +156,7 @@ distributeur-croquettes/
         └────────────────────────────────────┘
 ```
 <img width="1101" height="549" alt="image" src="https://github.com/user-attachments/assets/018c4510-7a39-4b35-aacf-1782afb3680a" />
+
 ---
 
 # ⚙️ Logique de fonctionnement
