@@ -11,6 +11,7 @@ Flux complet :
 import asyncio
 import json
 import logging
+import os
 import signal
 import sqlite3
 import threading
@@ -22,19 +23,20 @@ import websockets
 from websockets.server import WebSocketServerProtocol
 
 # ---------------------------------------------------------------------------
-# Config — modifier selon votre réseau
+# Config — surchargeable via variables d'environnement (Docker)
 # ---------------------------------------------------------------------------
-MQTT_BROKER = "localhost"
-MQTT_PORT   = 1883
+MQTT_BROKER = os.environ.get("MQTT_BROKER", "localhost")
+MQTT_PORT   = int(os.environ.get("MQTT_PORT", 1883))
 MQTT_TOPICS = [
     ("catfeeder/feed",      0),   # ESP8266 publie quand il distribue
     ("catfeeder/reservoir", 0),   # ESP8266 publie le niveau du réservoir
     ("catfeeder/status",    0),   # ESP8266 publie son état (online/offline)
 ]
-WS_HOST = "0.0.0.0"   # écoute sur toutes les interfaces
-WS_PORT = 8765
+WS_HOST = os.environ.get("WS_HOST", "0.0.0.0")   # écoute sur toutes les interfaces
+WS_PORT = int(os.environ.get("WS_PORT", 8765))
 
-DB_PATH = Path(__file__).parent / "catfeeder.db"
+_default_db = Path(__file__).parent / "catfeeder.db"
+DB_PATH = Path(os.environ.get("DB_PATH", str(_default_db)))
 
 # ---------------------------------------------------------------------------
 # Logging

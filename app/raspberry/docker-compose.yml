@@ -1,0 +1,80 @@
+# =============================================================
+# docker-compose.yml — Cat Feeder (Mosquitto + Bridge Python)
+#
+# Démarrage rapide sur Raspberry Pi :
+#   docker compose up -d                         # lancer les services
+#   docker compose --profile seed up seed        # (optionnel) données de test
+#   docker compose logs -f                       # voir les logs
+#   docker compose down                          # arrêter
+#   docker compose down -v                       # arrêter + supprimer les volumes
+# =============================================================
+services:
+
+  # -----------------------------------------------------------
+  # Broker MQTT
+  # -----------------------------------------------------------
+  mosquitto:
+    image: eclipse-mosquitto:2
+    container_name: catfeeder-mosquitto
+    restart: unless-stopped
+    ports:
+      - "1883:1883"   # MQTT (accessible par l'ESP8266 sur le réseau local)
+    volumes:
+      - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
+      - mosquitto-data:/mosquitto/data
+      - mosquitto-log:/mosquitto/log
+    healthcheck:
+      test: ["CMD", "mosquitto_pub", "-h", "localhost", "-t", "health", "-m", "ping", "-q", "0"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # -----------------------------------------------------------
+  # Bridge Python : MQTT ↔ WebSocket
+  # -----------------------------------------------------------
+  bridge:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catfeeder-bridge
+    restart: unless-stopped
+    depends_on:
+      mosquitto:
+        condition: service_healthy
+    ports:
+      - "8765:8765"   # WebSocket (accessible par l'app React)
+    volumes:
+      - bridge-data:/data
+    environment:
+      MQTT_BROKER: mosquitto
+      MQTT_PORT: "1883"
+      WS_HOST: "0.0.0.0"
+      WS_PORT: "8765"
+      DB_PATH: /data/catfeeder.db
+
+  # -----------------------------------------------------------
+  # Seed (optionnel) — données de test pour la première utilisation
+  # Lance : docker compose --profile seed up seed
+  # -----------------------------------------------------------
+  seed:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: catfeeder-seed
+    profiles: ["seed"]
+    volumes:
+      - bridge-data:/data
+    environment:
+      DB_PATH: /data/catfeeder.db
+    command: ["python3", "seed.py"]
+
+# -----------------------------------------------------------
+# Volumes persistants
+# -----------------------------------------------------------
+volumes:
+  mosquitto-data:
+  mosquitto-log:
+  bridge-data:
+    # La base SQLite (catfeeder.db) est conservée entre les redémarrages
+
+
