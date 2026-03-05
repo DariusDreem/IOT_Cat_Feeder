@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """
-bridge.py — Raspberry Pi : pont MQTT (ESP8266) ↔ WebSocket (App React)
+"""bridge.py — Raspberry Pi : pont MQTT (ESP32) ↔ WebSocket (App React)
 
 Flux complet :
-  ESP8266  →[MQTT publish]→  Mosquitto  →[paho subscribe]→  bridge.py
+  ESP32  →[MQTT publish]→  Mosquitto  →[paho subscribe]→  bridge.py
   bridge.py →[WebSocket push]→  App React (mobile)
-  App React →[WebSocket send]→  bridge.py →[MQTT publish]→  ESP8266
+  App React →[WebSocket send]→  bridge.py →[MQTT publish]→  ESP32
 """
 
 import asyncio
@@ -28,9 +28,9 @@ from websockets.server import WebSocketServerProtocol
 MQTT_BROKER = os.environ.get("MQTT_BROKER", "localhost")
 MQTT_PORT   = int(os.environ.get("MQTT_PORT", 1883))
 MQTT_TOPICS = [
-    ("catfeeder/feed",      0),   # ESP8266 publie quand il distribue
-    ("catfeeder/reservoir", 0),   # ESP8266 publie le niveau du réservoir
-    ("catfeeder/status",    0),   # ESP8266 publie son état (online/offline)
+    ("catfeeder/feed",      0),   # ESP32 publie quand il distribue
+    ("catfeeder/reservoir", 0),   # ESP32 publie le niveau du réservoir
+    ("catfeeder/status",    0),   # ESP32 publie son état (online/offline)
 ]
 WS_HOST = os.environ.get("WS_HOST", "0.0.0.0")   # écoute sur toutes les interfaces
 WS_PORT = int(os.environ.get("WS_PORT", 8765))
@@ -218,7 +218,7 @@ def on_message(_client, _userdata, msg):
     log.info(f"📨 MQTT ← {topic} : {payload}")
 
     with state_lock:
-        # ── Repas distribué par l'ESP8266 ──────────────────────────────────
+        # ── Repas distribué par l'ESP32 ───────────────────────────────────
         if topic == "catfeeder/feed":
             event = {
                 "id":           _new_id(),
@@ -231,7 +231,7 @@ def on_message(_client, _userdata, msg):
             _ws_broadcast({"type": "feed_event", "payload": event})
             log.info(f"🍽  Repas enregistré : {event['portionGrams']}g")
 
-        # ── Niveau réservoir mis à jour par l'ESP8266 ──────────────────────
+        # ── Niveau réservoir mis à jour par l'ESP32 ───────────────────────
         elif topic == "catfeeder/reservoir":
             reservoir = {
                 "levelPercent": int(payload.get("levelPercent", 0)),
@@ -243,12 +243,12 @@ def on_message(_client, _userdata, msg):
             _ws_broadcast({"type": "reservoir", "payload": reservoir})
             log.info(f"📦 Réservoir : {reservoir['levelPercent']}%")
 
-        # ── Statut ESP8266 (last will / online) ───────────────────────────
+        # ── Statut ESP32 (last will / online) ────────────────────────────
         elif topic == "catfeeder/status":
             online = payload.get("online", False)
             state["isOnline"] = online
             _ws_broadcast({"type": "state", "payload": {"isOnline": online}})
-            log.info(f"{'🟢' if online else '🔴'} ESP8266 {'en ligne' if online else 'hors ligne'}")
+            log.info(f"{'🟢' if online else '🔴'} ESP32 {'en ligne' if online else 'hors ligne'}")
 
 # ---------------------------------------------------------------------------
 # WebSocket server
@@ -278,7 +278,7 @@ async def ws_handler(websocket: WebSocketServerProtocol):
                         "catfeeder/cmd/feed",
                         json.dumps({"portionGrams": grams}),
                     )
-                    log.info(f"⚡ Commande distribution → ESP8266 : {grams}g")
+                    log.info(f"⚡ Commande distribution → ESP32 : {grams}g")
 
                 # ── Commande : remplissage confirmé par l'utilisateur ──────
                 elif msg_type == "fill_event":

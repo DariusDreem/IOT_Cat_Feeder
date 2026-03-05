@@ -44,9 +44,9 @@ export interface WsMessage<T = unknown> {
   payload: T
 }
 
-// Topics MQTT publiés par l'ESP8266
+// Topics MQTT publiés par l'ESP32
 // catfeeder/feed       → { portionGrams: number, timestamp: string }
 // catfeeder/reservoir  → { levelPercent: number, isEmpty: boolean }
-// Topics souscrits par l'ESP8266
+// Topics souscrits par l'ESP32
 // catfeeder/cmd/feed   → { portionGrams: number }
 // catfeeder/cmd/fill   → {}

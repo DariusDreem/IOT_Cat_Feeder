@@ -18,7 +18,7 @@ services:
     container_name: catfeeder-mosquitto
     restart: unless-stopped
     ports:
-      - "1883:1883"   # MQTT (accessible par l'ESP8266 sur le réseau local)
+      - "1883:1883"   # MQTT (accessible par l'ESP32 sur le réseau local)
     volumes:
       - ./mosquitto/config/mosquitto.conf:/mosquitto/config/mosquitto.conf:ro
       - mosquitto-data:/mosquitto/data
