@@ -1,0 +1,18 @@
+[Unit]
+Description=Cat Feeder — MQTT/WebSocket Bridge
+After=network.target mosquitto.service
+Wants=mosquitto.service
+
+[Service]
+Type=simple
+User=pi
+WorkingDirectory=/home/pi/cat-feeder
+ExecStart=/usr/bin/python3 /home/pi/cat-feeder/bridge.py
+Restart=on-failure
+RestartSec=5s
+StandardOutput=journal
+StandardError=journal
+
+[Install]
+WantedBy=multi-user.target
+
