@@ -53,6 +53,20 @@ services:
       DB_PATH: /data/catfeeder.db
 
   # -----------------------------------------------------------
+  # Serveur Web Nginx : Front-End React
+  # -----------------------------------------------------------
+  frontend:
+    image: nginx:alpine
+    container_name: catfeeder-frontend
+    restart: unless-stopped
+    ports:
+      - "80:80"       # Web (accessible via l'adresse IP du Raspberry)
+    volumes:
+      - ../dist:/usr/share/nginx/html:ro # Monte le dossier dist compilé de React
+    depends_on:
+      - bridge
+
+  # -----------------------------------------------------------
   # Seed (optionnel) — données de test pour la première utilisation
   # Lance : docker compose --profile seed up seed
   # -----------------------------------------------------------
@@ -76,5 +90,4 @@ volumes:
   mosquitto-log:
   bridge-data:
     # La base SQLite (catfeeder.db) est conservée entre les redémarrages
-
 
