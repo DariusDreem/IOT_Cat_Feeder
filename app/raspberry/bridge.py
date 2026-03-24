@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-"""
 """bridge.py — Raspberry Pi : pont MQTT (ESP32) ↔ WebSocket (App React)
 
 Flux complet :
@@ -278,7 +277,7 @@ async def ws_handler(websocket: WebSocketServerProtocol):
                         "catfeeder/cmd/feed",
                         json.dumps({"portionGrams": grams}),
                     )
-                    log.info(f"⚡ Commande distribution → ESP32 : {grams}g")
+                    log.info(f"[ACTION UTILISATEUR] 👆 Commande distribution UI → ESP32 : {grams}g")
 
                 # ── Commande : remplissage confirmé par l'utilisateur ──────
                 elif msg_type == "fill_event":
@@ -302,7 +301,7 @@ async def ws_handler(websocket: WebSocketServerProtocol):
                     mqtt_client.publish("catfeeder/cmd/fill", json.dumps({}))
                     _ws_broadcast({"type": "fill_event", "payload": fill_event})
                     _ws_broadcast({"type": "reservoir",  "payload": reservoir_full})
-                    log.info(f"✅ Réservoir rempli par {filled_by}")
+                    log.info(f"[ACTION UTILISATEUR] ✅ Réservoir rempli via UI par {filled_by}")
 
             except (json.JSONDecodeError, KeyError, ValueError) as e:
                 log.warning(f"Message WS invalide : {e}")

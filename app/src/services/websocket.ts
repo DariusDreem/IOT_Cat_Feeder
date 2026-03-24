@@ -91,6 +91,9 @@ export class CatFeederWsClient {
 
   /** Envoie une commande vers le Raspberry Pi (qui publie sur MQTT catfeeder/cmd/...) */
   send(type: WsMessageType, payload: unknown = {}) {
+    // ---- LOG ACTION UTILISATEUR ----
+    console.info(`[ACTION UTILISATEUR / WS SEND] type=${type}`, payload)
+    
     if (this.isMock) {
       this._handleMockCommand(type, payload)
       return
@@ -114,6 +117,9 @@ export class CatFeederWsClient {
       this.ws.onmessage = (event) => {
         try {
           const msg = JSON.parse(event.data as string) as WsMessage
+          // ---- LOG RETOUR SERVEUR ----
+          console.debug(`[RETOUR SERVEUR / WS RECV] type=${msg.type}`, msg.payload)
+          
           this._notifyMessage(msg)
         } catch {
           console.warn('[WS] Message non JSON reçu', event.data)
@@ -206,4 +212,3 @@ export class CatFeederWsClient {
 
 /** Instance singleton */
 export const wsClient = new CatFeederWsClient()
-
