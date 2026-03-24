@@ -27,7 +27,7 @@ const MOCK_DATA: CatFeederState = {
 }
 
 /** Passer à true pour utiliser les mock data sans ESP8266 */
-const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true' || true
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 
 // ---------------------------------------------------------------------------
 // Fonctions d'API réelles

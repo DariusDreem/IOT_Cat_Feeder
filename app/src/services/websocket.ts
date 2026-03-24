@@ -10,7 +10,7 @@ import type { CatFeederState, FeedEvent, FillEvent, WsMessage, WsMessageType } f
 // ---------------------------------------------------------------------------
 // Config
 // ---------------------------------------------------------------------------
-const USE_MOCK = import.meta.env.VITE_USE_MOCK !== 'false'   // mock par défaut
+const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
 const RASPBERRY_WS_URL = import.meta.env.VITE_RASPBERRY_WS_URL ?? 'ws://raspberrypi.local:8765'
 
 // ---------------------------------------------------------------------------
