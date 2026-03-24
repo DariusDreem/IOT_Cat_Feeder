@@ -4,11 +4,12 @@
 #include <ArduinoJson.h>
 
 // =============================================================
-// Configuration — adapter à votre réseau / Raspberry Pi
+// Configuration — à ADAPTER pour votre installation
 // =============================================================
-const char *WIFI_SSID = "VOTRE_SSID";             // ← Nom du réseau WiFi
-const char *WIFI_PASSWORD = "VOTRE_MOT_DE_PASSE"; // ← Mot de passe WiFi
-const char *MQTT_SERVER = "192.168.1.XX";         // ← IP du Raspberry Pi
+// ⚠️ IMPORTANT : remplacez ces valeurs avant de flasher l'ESP32 ⚠️
+const char *WIFI_SSID = "isildur";             // ← Nom du réseau WiFi
+const char *WIFI_PASSWORD = "isildure"; // ← Mot de passe WiFi
+const char *MQTT_SERVER = "172.20.10.3";       // ← IP de la Raspberry Pi (broker Mosquitto)
 const int MQTT_PORT = 1883;
 
 // =============================================================
@@ -102,7 +103,7 @@ int estimateLevelPercent(bool isEmpty)
 // =============================================================
 void publishReservoir(int levelPercent, bool isEmpty)
 {
-  JsonDocument doc;
+  StaticJsonDocument<128> doc;
   doc["levelPercent"] = levelPercent;
   doc["isEmpty"] = isEmpty;
 
@@ -118,10 +119,10 @@ void publishReservoir(int levelPercent, bool isEmpty)
 // =============================================================
 void publishFeedEvent(int portionGrams)
 {
-  JsonDocument doc;
+  StaticJsonDocument<64> doc;
   doc["portionGrams"] = portionGrams;
 
-  char buffer[128];
+  char buffer[64];
   serializeJson(doc, buffer);
   mqttClient.publish(TOPIC_FEED, buffer);
 
@@ -133,7 +134,7 @@ void publishFeedEvent(int portionGrams)
 // =============================================================
 void publishStatus(bool online)
 {
-  JsonDocument doc;
+  StaticJsonDocument<64> doc;
   doc["online"] = online;
 
   char buffer[64];
@@ -185,7 +186,7 @@ void mqttCallback(char *topic, byte *payload, unsigned int length)
   // ── Commande : distribuer ──
   if (strcmp(topic, TOPIC_CMD_FEED) == 0)
   {
-    JsonDocument doc;
+    StaticJsonDocument<128> doc;
     DeserializationError err = deserializeJson(doc, message);
     int grams = DEFAULT_PORTION;
     if (!err && doc["portionGrams"].is<int>())
@@ -225,7 +226,7 @@ void connectMQTT()
   Serial.println("…");
 
   // Last Will & Testament : si l'ESP32 se déconnecte, le broker publie offline
-  JsonDocument lwt;
+  StaticJsonDocument<64> lwt;
   lwt["online"] = false;
   char lwtBuf[64];
   serializeJson(lwt, lwtBuf);
