@@ -11,7 +11,14 @@ import type { CatFeederState, FeedEvent, FillEvent, WsMessage, WsMessageType } f
 // Config
 // ---------------------------------------------------------------------------
 const USE_MOCK = import.meta.env.VITE_USE_MOCK === 'true'
-const RASPBERRY_WS_URL = import.meta.env.VITE_RASPBERRY_WS_URL ?? `ws://${window.location.hostname}:8765`
+let RASPBERRY_WS_URL = import.meta.env.VITE_RASPBERRY_WS_URL ?? `ws://${window.location.hostname}:8765`
+
+/** Met à jour l'URL du WebSocket depuis les settings */
+export function updateWsUrl(url: string) {
+  if (url && url.startsWith('ws')) {
+    RASPBERRY_WS_URL = url
+  }
+}
 
 // ---------------------------------------------------------------------------
 // Mock data — format identique à ce que renvoie bridge.py depuis SQLite

@@ -12,6 +12,8 @@ interface CatFeederContextValue {
   isConnected: boolean
   isLoading: boolean
   isError: boolean
+  connect: () => void
+  disconnect: () => void
   triggerFeed: (portionGrams?: number) => void
   confirmFill: (filledByUser?: string) => void
 }
@@ -19,12 +21,14 @@ interface CatFeederContextValue {
 const CatFeederContext = createContext<CatFeederContextValue | null>(null)
 
 export function CatFeederProvider({ children }: { children: ReactNode }) {
-  const { data, isConnected, isLoading, isError } = _useCatFeederData()
+  const { data, isConnected, isLoading, isError, connect, disconnect } = _useCatFeederData()
   const { mutate: triggerFeed } = useTriggerFeed()
   const { mutate: confirmFill } = useConfirmFill()
 
   return (
-    <CatFeederContext.Provider value={{ data, isConnected, isLoading, isError, triggerFeed, confirmFill }}>
+    <CatFeederContext.Provider
+      value={{ data, isConnected, isLoading, isError, connect, disconnect, triggerFeed, confirmFill }}
+    >
       {children}
     </CatFeederContext.Provider>
   )
@@ -35,4 +39,3 @@ export function useCatFeeder() {
   if (!ctx) throw new Error('useCatFeeder must be used inside CatFeederProvider')
   return ctx
 }
-

@@ -219,16 +219,36 @@ def on_message(_client, _userdata, msg):
     with state_lock:
         # ── Repas distribué par l'ESP32 ───────────────────────────────────
         if topic == "catfeeder/feed":
+            portion_grams = int(payload.get("portionGrams", 40))
             event = {
                 "id":           _new_id(),
                 "timestamp":    payload.get("timestamp", _now_iso()),
-                "portionGrams": int(payload.get("portionGrams", 40)),
+                "portionGrams": portion_grams,
             }
             state["feedHistory"].insert(0, event)
             state["feedHistory"] = state["feedHistory"][:50]
             db_save_feed(event)
+
+            # Décrémenter le niveau du réservoir (estimation : 40g = ~5%)
+            percent_to_deduct = int(portion_grams / 8) # 40g -> 5%
+            new_level = max(0, state["reservoir"]["levelPercent"] - percent_to_deduct)
+            
+            # Si le capteur dit que c'est vide, on force à 0
+            is_empty = state["reservoir"]["isEmpty"]
+            if is_empty:
+                new_level = 0
+            
+            reservoir = {
+                "levelPercent": new_level,
+                "isEmpty":      new_level == 0 or is_empty,
+                "lastUpdated":  _now_iso(),
+            }
+            state["reservoir"] = reservoir
+            db_save_reservoir(reservoir)
+
             _ws_broadcast({"type": "feed_event", "payload": event})
-            log.info(f"🍽  Repas enregistré : {event['portionGrams']}g")
+            _ws_broadcast({"type": "reservoir", "payload": reservoir})
+            log.info(f"🍽  Repas enregistré : {portion_grams}g. Réservoir estimé à {new_level}%")
 
         # ── Niveau réservoir mis à jour par l'ESP32 ───────────────────────
         elif topic == "catfeeder/reservoir":

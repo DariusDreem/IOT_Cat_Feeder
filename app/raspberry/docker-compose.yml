@@ -63,6 +63,7 @@ services:
       - "80:80"       # Web (accessible via l'adresse IP du Raspberry)
     volumes:
       - ../dist:/usr/share/nginx/html:ro # Monte le dossier dist compilé de React
+      - ./nginx/default.conf:/etc/nginx/conf.d/default.conf:ro # Configuration Nginx pour l'application SPA
     depends_on:
       - bridge
 

@@ -5,9 +5,10 @@
 import { useState } from 'react'
 import {
   Sun, Moon, Monitor, Cat, Sliders, Clock, Wifi,
-  Plus, Trash2, RotateCcw, ChevronRight, Check,
+  Plus, Trash2, RotateCcw, ChevronRight, Check, Power, PowerOff,
 } from 'lucide-react'
 import { useSettings, type Theme, type AccentColor, type FeedSchedule } from '../context/SettingsContext'
+import { useCatFeeder } from '../context/CatFeederContext'
 
 // ---------------------------------------------------------------------------
 // Helpers UI
@@ -307,20 +308,30 @@ function SchedulesSection() {
 
 function ConnectionSection() {
   const { settings, update } = useSettings()
+  const { isConnected, connect, disconnect } = useCatFeeder()
   const [expanded, setExpanded] = useState(false)
+
+  const handleUrlChange = (url: string) => {
+    update({ raspberryWsUrl: url })
+  }
+
   return (
     <>
       <SectionTitle>Connexion</SectionTitle>
       <Card>
         <Row>
-          <Label icon={Wifi} label="Mode simulation" sub="Données fictives sans matériel" />
-          <Toggle value={settings.useMock} onChange={v => update({ useMock: v })} />
+          <Label
+            icon={isConnected ? Power : PowerOff}
+            label={isConnected ? 'Connecté' : 'Déconnecté'}
+            sub={settings.raspberryWsUrl}
+          />
+          <Toggle value={isConnected} onChange={v => (v ? connect() : disconnect())} />
         </Row>
         <button
           onClick={() => setExpanded(e => !e)}
           className="w-full flex items-center justify-between px-4 py-3.5"
         >
-          <Label icon={Wifi} label="Adresse Raspberry Pi" sub={settings.raspberryWsUrl} />
+          <Label icon={Wifi} label="Adresse du WebSocket" />
           <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${expanded ? 'rotate-90' : ''}`} />
         </button>
         {expanded && (
@@ -328,11 +339,13 @@ function ConnectionSection() {
             <input
               type="text"
               value={settings.raspberryWsUrl}
-              onChange={e => update({ raspberryWsUrl: e.target.value })}
+              onChange={e => handleUrlChange(e.target.value)}
               placeholder="ws://192.168.1.XX:8765"
               className="w-full text-sm bg-gray-100 dark:bg-gray-700 text-gray-700 dark:text-gray-200 rounded-xl px-3 py-2.5 outline-none focus:ring-2 focus:ring-brand-400"
             />
-            <p className="text-xs text-gray-400 mt-1.5">Actif au prochain démarrage de l'app</p>
+            <p className="text-xs text-gray-400 mt-1.5">
+              La déconnexion/reconnexion est nécessaire pour appliquer.
+            </p>
           </div>
         )}
       </Card>
@@ -384,4 +397,3 @@ export default function SettingsPage() {
     </div>
   )
 }
-

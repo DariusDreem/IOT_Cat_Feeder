@@ -1,5 +1,6 @@
 import { AlertTriangle, X } from 'lucide-react'
 import { useState } from 'react'
+import { useSettings } from '../context/SettingsContext'
 
 interface AlertBannerProps {
   isEmpty: boolean
@@ -7,9 +8,10 @@ interface AlertBannerProps {
 }
 
 export default function AlertBanner({ isEmpty, levelPercent }: AlertBannerProps) {
+  const { settings } = useSettings()
   const [dismissed, setDismissed] = useState(false)
 
-  const showAlert = !dismissed && (isEmpty || levelPercent <= 20)
+  const showAlert = !dismissed && (isEmpty || levelPercent <= settings.lowReservoirThreshold)
   if (!showAlert) return null
 
   const isEmptyAlert = isEmpty || levelPercent === 0
@@ -43,4 +45,3 @@ export default function AlertBanner({ isEmpty, levelPercent }: AlertBannerProps)
     </div>
   )
 }
-

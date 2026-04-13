@@ -5,6 +5,7 @@
  */
 import { createContext, useContext, useEffect, useState, type ReactNode } from 'react'
 import { applyColorPalette, applyTheme } from '../utils/theme'
+import { updateWsUrl } from '../services/websocket'
 
 export type Theme = 'light' | 'dark' | 'system'
 export type AccentColor = 'orange' | 'blue' | 'green' | 'purple'
@@ -24,7 +25,6 @@ export interface Settings {
   defaultPortionGrams: number
   schedules: FeedSchedule[]
   raspberryWsUrl: string
-  useMock: boolean
   lowReservoirThreshold: number   // % en dessous duquel l'alerte se déclenche
 }
 
@@ -37,8 +37,7 @@ const DEFAULT_SETTINGS: Settings = {
     { id: '1', label: 'Matin',  time: '08:00', portionGrams: 40, enabled: true },
     { id: '2', label: 'Soir',   time: '18:00', portionGrams: 40, enabled: true },
   ],
-  raspberryWsUrl: 'ws://raspberrypi.local:8765',
-  useMock: true,
+  raspberryWsUrl: `ws://${window.location.hostname}:8765`,
   lowReservoirThreshold: 20,
 }
 
@@ -68,6 +67,8 @@ export function SettingsProvider({ children }: { children: ReactNode }) {
   // Persistance automatique
   useEffect(() => {
     localStorage.setItem('catfeeder-settings', JSON.stringify(settings))
+    // Mettre à jour l'URL du WebSocket en live
+    updateWsUrl(settings.raspberryWsUrl)
   }, [settings])
 
   // Appliquer couleur + thème immédiatement au montage
@@ -125,4 +126,3 @@ export function useSettings() {
   if (!ctx) throw new Error('useSettings must be used inside SettingsProvider')
   return ctx
 }
-

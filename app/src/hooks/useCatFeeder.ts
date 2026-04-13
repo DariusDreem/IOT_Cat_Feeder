@@ -84,6 +84,14 @@ export function useCatFeederData() {
     isLoading: true,
   })
 
+  const connect = useCallback(() => {
+    wsClient.connect()
+  }, [])
+
+  const disconnect = useCallback(() => {
+    wsClient.disconnect()
+  }, [])
+
   useEffect(() => {
     // Abonnement aux statuts de connexion
     const unsubStatus = wsClient.onStatus((connected) => {
@@ -108,20 +116,23 @@ export function useCatFeederData() {
       }
     })
 
-    wsClient.connect()
+    // Connexion automatique au montage
+    connect()
 
     return () => {
       unsubStatus()
       unsubMsg()
-      wsClient.disconnect()
+      disconnect()
     }
-  }, [])
+  }, [connect, disconnect])
 
   return {
     data: state.data,
     isConnected: state.isConnected,
     isLoading: state.isLoading,
     isError: !state.isConnected && !state.isLoading,
+    connect,
+    disconnect,
   }
 }
 
