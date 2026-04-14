@@ -3,14 +3,15 @@
 #include <PubSubClient.h>
 #include <ArduinoJson.h>
 #include "HX711.h"
+#include "ir_module.h"
 
 // =============================================================
 // Configuration —  À ADAPTER pour votre installation
 // =============================================================
 // ⚠️ IMPORTANT : remplacez ces valeurs avant de flasher l'ESP32 ⚠️
-const char *WIFI_SSID = "isildur";             // ← Nom du réseau WiFi
-const char *WIFI_PASSWORD = "isildure"; // ← Mot de passe WiFi
-const char *MQTT_SERVER = "172.20.10.3";       // ← IP de la Raspberry Pi (broker Mosquitto)
+const char *WIFI_SSID = "isildur";       // ← Nom du réseau WiFi
+const char *WIFI_PASSWORD = "isildure";  // ← Mot de passe WiFi
+const char *MQTT_SERVER = "172.20.10.3"; // ← IP de la Raspberry Pi (broker Mosquitto)
 const int MQTT_PORT = 1883;
 
 // =============================================================
@@ -53,6 +54,7 @@ const unsigned long MOTOR_TIMEOUT_MS = 15000;  // sécurité: coupe moteur aprè
 WiFiClient espClient;
 PubSubClient mqttClient(espClient);
 HX711 scale;
+IRModule irModule(IR_RESERVOIR_PIN, IR_TURBINE_PIN, HIGH, HIGH);
 
 unsigned long lastSensorRead = 0;
 unsigned long lastReconnect = 0;
@@ -98,7 +100,11 @@ void setupWiFi()
 // =============================================================
 bool isReserveEmpty()
 {
-  return digitalRead(IR_RESERVOIR_PIN) == HIGH;
+  bool isEmpty = irModule.isReservoirEmpty();
+  // Debug: afficher l'état du capteur brut
+  Serial.printf("[DEBUG] IR Réservoir raw: isEmpty=%s (GPIO %d)\n", 
+                isEmpty ? "true" : "false", IR_RESERVOIR_PIN);
+  return isEmpty;
 }
 
 bool detectJam()
@@ -106,12 +112,13 @@ bool detectJam()
   // Si le capteur est LOW ou HIGH en cas de problème, adapter ici
   // Par exemple, on peut imaginer un comptage d'impulsions (encodeur optique)
   // Simplification : si on lit une valeur fixe d'alerte sur IR_TURBINE_PIN bloqué
-  return digitalRead(IR_TURBINE_PIN) == HIGH;
+  return irModule.isTurbineBlocked();
 }
 
 int getBowlWeight()
 {
-  if (scale.is_ready()) {
+  if (scale.is_ready())
+  {
     float w = scale.get_units(5);
     return w < 0 ? 0 : (int)w;
   }
@@ -145,7 +152,7 @@ void publishBowlWeight(int weightGrams, bool isEmpty)
   Serial.printf("🍽 Gamelle: %hg (vide=%s)\n", weightGrams, isEmpty ? "oui" : "non");
 }
 
-void publishAlert(const char* message)
+void publishAlert(const char *message)
 {
   StaticJsonDocument<128> doc;
   doc["message"] = message;
@@ -198,14 +205,16 @@ void dispenseFeed(int targetPortionGrams)
   {
     // Vérifier si le poids cible est atteint
     int currentWeight = getBowlWeight();
-    if (currentWeight >= targetWeight) {
+    if (currentWeight >= targetWeight)
+    {
       Serial.println("✅ Portion atteinte !");
       break;
     }
 
     // Vérifier blocage (Capteur IR de sécurité turbine)
     // NB: Logique à affiner selon votre montage mécanique (détection d'arrêt d'hélice)
-    if (true /*Remplacer par lecture si IR encodeur*/ && detectJam() && millis() - startTime > 2000) {
+    if (true /*Remplacer par lecture si IR encodeur*/ && detectJam() && millis() - startTime > 2000)
+    {
       jammed = true;
       Serial.println("❌ Blocage Turbine détecté !");
       break;
@@ -217,7 +226,8 @@ void dispenseFeed(int targetPortionGrams)
   // Couper moteur
   digitalWrite(MOTOR_PIN, LOW);
 
-  if (jammed) {
+  if (jammed)
+  {
     publishAlert("Moteur bloqué !");
   }
 
@@ -229,7 +239,8 @@ void dispenseFeed(int targetPortionGrams)
   // Mettre à jour l'état final
   publishBowlWeight(endWeight, endWeight < 5);
   bool emptyRes = isReserveEmpty();
-  if (emptyRes != lastIsEmpty) {
+  if (emptyRes != lastIsEmpty)
+  {
     publishReservoir(emptyRes);
     lastIsEmpty = emptyRes;
   }
@@ -333,8 +344,11 @@ void setup()
   Serial.println("\n🐾 Cat Feeder ESP32 — Démarrage");
 
   // Capteurs
-  pinMode(IR_RESERVOIR_PIN, INPUT);
-  pinMode(IR_TURBINE_PIN, INPUT);
+  irModule.begin();
+  Serial.printf("✅ Module IR initialisé (GPIO Réservoir: %d)\n", IR_RESERVOIR_PIN);
+  delay(500); // Attendre la stabilisation du capteur
+  bool initialState = irModule.isReservoirEmpty();
+  Serial.printf("📊 État initial du réservoir: %s\n", initialState ? "VIDE" : "PLEIN");
 
   // Actionneurs
   pinMode(MOTOR_PIN, OUTPUT);
@@ -359,6 +373,8 @@ void setup()
 // =============================================================
 void loop()
 {
+  irModule.update();
+
   // Maintenir la connexion WiFi
   if (WiFi.status() != WL_CONNECTED)
   {
@@ -379,8 +395,9 @@ void loop()
   {
     lastSensorRead = now;
 
-    // 1) Réservoir
+    // 1) Capteur IR Réservoir
     bool isEmpty = isReserveEmpty();
+    Serial.printf("📡 IR Réservoir: %s\n", isEmpty ? "VIDE ⚠️" : "PLEIN ✅");
     if (isEmpty != lastIsEmpty)
     {
       publishReservoir(isEmpty);
