@@ -185,6 +185,12 @@ void dispenseFeed(int targetPortionGrams)
 {
   Serial.printf("⏳ Démarrage distribution pour %dg...\n", targetPortionGrams);
 
+  // Par défaut en développement pour tester facilement sans le vrai matériel, on simule :
+  int distributedGrams = targetPortionGrams;
+  bool jammed = false;
+
+  // -- TODO: Dé-commenter ou adapter la logique de boucle avec la vraie balance --
+  /*
   int startWeight = getBowlWeight();
   int targetWeight = startWeight + targetPortionGrams;
 
@@ -192,7 +198,6 @@ void dispenseFeed(int targetPortionGrams)
   digitalWrite(MOTOR_PIN, HIGH);
 
   unsigned long startTime = millis();
-  bool jammed = false;
 
   while (millis() - startTime < MOTOR_TIMEOUT_MS)
   {
@@ -204,8 +209,7 @@ void dispenseFeed(int targetPortionGrams)
     }
 
     // Vérifier blocage (Capteur IR de sécurité turbine)
-    // NB: Logique à affiner selon votre montage mécanique (détection d'arrêt d'hélice)
-    if (true /*Remplacer par lecture si IR encodeur*/ && detectJam() && millis() - startTime > 2000) {
+    if (digitalRead(IR_TURBINE_PIN) == HIGH && millis() - startTime > 2000) {
       jammed = true;
       Serial.println("❌ Blocage Turbine détecté !");
       break;
@@ -217,17 +221,27 @@ void dispenseFeed(int targetPortionGrams)
   // Couper moteur
   digitalWrite(MOTOR_PIN, LOW);
 
+  int endWeight = getBowlWeight();
+  distributedGrams = max(0, endWeight - startWeight);
+  */
+
+  // -- Simulation moteur simple (temporaire pour test) --
+  digitalWrite(MOTOR_PIN, HIGH);
+  delay(2000); // Fait tourner le moteur 2 secondes
+  digitalWrite(MOTOR_PIN, LOW);
+  // -----------------------------------------------------
+
   if (jammed) {
     publishAlert("Moteur bloqué !");
   }
 
-  int endWeight = getBowlWeight();
-  int distributedGrams = max(0, endWeight - startWeight);
-
+  // On envoie le message MQTT de confirmation de distribution (très important pour que le Raspberry enregistre le repas)
   publishFeedEvent(distributedGrams);
 
   // Mettre à jour l'état final
+  int endWeight = getBowlWeight();
   publishBowlWeight(endWeight, endWeight < 5);
+
   bool emptyRes = isReserveEmpty();
   if (emptyRes != lastIsEmpty) {
     publishReservoir(emptyRes);
@@ -387,7 +401,9 @@ void loop()
       lastIsEmpty = isEmpty;
     }
 
-    // 2) Poids gamelle
+    // 2) Poids gamelle (simulation sans balance)
+    // On garde le code de la gamelle mais on le laisse en "simulation"
+    // puisqu'on a pas de vraie balance.
     int w = getBowlWeight();
     if (abs(w - lastBowlWeight) > 5) // Seuil de tolérance bruit de 5 grammes
     {
