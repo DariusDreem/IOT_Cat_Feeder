@@ -11,7 +11,7 @@
 // ⚠️ IMPORTANT : remplacez ces valeurs avant de flasher l'ESP32 ⚠️
 const char *WIFI_SSID = "isildur";       // ← Nom du réseau WiFi
 const char *WIFI_PASSWORD = "isildure";  // ← Mot de passe WiFi
-const char *MQTT_SERVER = "172.20.10.3"; // ← IP de la Raspberry Pi (broker Mosquitto)
+const char *MQTT_SERVER = "172.20.10.4"; // ← IP de la Raspberry Pi (broker Mosquitto)
 const int MQTT_PORT = 1883;
 
 // =============================================================

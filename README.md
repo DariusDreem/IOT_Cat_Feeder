@@ -2,16 +2,20 @@
 
 ## 📌 Description du projet
 
-Ce projet consiste à concevoir un **distributeur de croquettes connecté** pour chat, automatisé et supervisé à distance.
+Ce projet est un **système IoT complet** pour distributeur de croquettes connecté, avec supervision temps réel et historique persistant. Le système combine un **microcontrôleur embarqué (ESP32)**, une **passerelle Edge (Raspberry Pi 5)** et une **infrastructure Cloud optionnelle** pour assurer une disponibilité maximale même en cas de perte réseau.
 
-Fonctionnalités principales :
+### Fonctionnalités Principales
 
-* Distribution motorisée des croquettes
-* Détection de la présence du chat
-* Vérification du niveau du réservoir
-* Réglages locaux via boutons
-* Supervision et contrôle à distance
-* Stockage des données (historique, états, logs)
+✅ **Distribution motorisée** des croquettes avec mesure de portion  
+✅ **Détection du niveau du réservoir** via capteur IR laser  
+✅ **Pesage de la gamelle** avec balance HX711  
+✅ **Détection présence du chat** via capteur ultrason (optionnel)  
+✅ **Supervision temps réel** via WebSocket sur mobile/web  
+✅ **Historique persistant** localement (SQLite) et dans le Cloud (PostgreSQL)  
+✅ **Synchronisation Edge-to-Cloud** avec récupération en cas de déconnexion  
+✅ **Interface utilisateur réactive** (React 19 + TypeScript + Tailwind CSS)  
+✅ **Gestion d'alertes** (moteur bloqué, réservoir vide, etc.)  
+✅ **Mode hors-ligne** : l'app continue de fonctionner si Cloud indisponible
 
 ---
 
